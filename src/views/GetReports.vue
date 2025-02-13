@@ -1,7 +1,7 @@
-// filepath: /Users/sunwen/Projects/FrontEnd/frontend/src/views/Home.vue
 <template>
-  <div class="home-container">
-    <h2>欢迎来到主页</h2>
+  <div class="reports-container">
+    <h2>报告列表</h2>
+    <button @click="GetReports">获取报告</button>
     <div v-if="data">
       <h3>Data from API:</h3>
       <pre>{{ data }}</pre>
@@ -11,32 +11,30 @@
 
 <script>
 import axios from 'axios';
-
 export default {
-  name: 'HomePage',
+  name: 'GetReports',
   data() {
     return {
       data: null,
     };
   },
   methods: {
-    async GetHomePage() {
+    async GetReports() {
       try {
         const userName = sessionStorage.getItem('user_name');
-        //const role = sessionStorage.getItem('role');
+        const role = sessionStorage.getItem('role');
         const response = await axios({
           method: 'post',
-          url: '/data',
+          url: '/report/get',
           headers: {
             'Content-Type': 'application/json',
           },
           withCredentials: true,
           data: {
-            user_name : userName,
-            //role: role,
+            user_name: userName,
+            role: role,
           }
         });
-        console.log('Data from API:', response.data);
         this.data = response.data;
       } catch (error) {
         console.error('Error posting data:', error);
@@ -44,13 +42,13 @@ export default {
     },
   },
   mounted() {
-    this.GetHomePage(); // 在组件挂载时获取数据
+    this.GetReports(); // 在组件挂载时获取数据
   }
 };
 </script>
 
 <style scoped>
-.home-container {
+.reports-container {
   text-align: center;
   margin-top: 50px;
 }

@@ -17,6 +17,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: 'LoginPage',
   data() {
@@ -26,12 +27,38 @@ export default {
     };
   },
   methods: {
-    handleLogin() {
-      // 处理登录逻辑
+    async handleLogin() {
+      // 捕获用户输入的账号密码
       console.log('用户名:', this.username);
       console.log('密码:', this.password);
-      // 模拟登录成功，跳转到 Home 页面
-      this.$router.push({ name: 'Home' });
+      // 发送登陆请求
+      try {
+        const response = await axios(
+          {
+            method: 'post',
+            url: '/login',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data: {
+              user_name: this.username,
+              pass_word: this.password
+            },
+            withCredentials: true
+          });
+        console.log('登录成功:', response.data);
+         // 解析并保存 Cookie 中的 user_name 字段
+        const cookies = document.cookie.split('; ');
+        const userNameCookie = cookies.find(cookie => cookie.startsWith('user_name='));
+        if (userNameCookie) {
+          const userName = userNameCookie.split('=')[1];
+          sessionStorage.setItem('user_name', userName);
+        }
+        // 模拟登录成功，跳转到 Home 页面
+        this.$router.push({ name: 'Home' });
+      } catch (error) {
+        console.error('登录失败:', error);
+      }
     }
   }
 };
