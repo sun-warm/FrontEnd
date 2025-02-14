@@ -47,13 +47,10 @@ export default {
             withCredentials: true
           });
         console.log('登录成功:', response.data);
-         // 解析并保存 Cookie 中的 user_name 字段
-        const cookies = document.cookie.split('; ');
-        const userNameCookie = cookies.find(cookie => cookie.startsWith('user_name='));
-        if (userNameCookie) {
-          const userName = userNameCookie.split('=')[1];
-          sessionStorage.setItem('user_name', userName);
-        }
+        
+        sessionStorage.setItem('user_name', this.username);
+        console.log('user_name:', this.username);
+        
         // 模拟登录成功，跳转到 Home 页面
         this.$router.push({ name: 'Home' });
       } catch (error) {

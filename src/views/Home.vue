@@ -1,4 +1,3 @@
-// filepath: /Users/sunwen/Projects/FrontEnd/frontend/src/views/Home.vue
 <template>
   <div class="home-container">
     <h2>欢迎来到主页</h2>
@@ -11,7 +10,7 @@
 
 <script>
 import axios from 'axios';
-
+import * as echarts from 'echarts';
 export default {
   name: 'HomePage',
   data() {
@@ -22,18 +21,19 @@ export default {
   methods: {
     async GetHomePage() {
       try {
-        const userName = sessionStorage.getItem('user_name');
-        //const role = sessionStorage.getItem('role');
+        const userName = sessionStorage.getItem('user_name'); // 从 sessionStorage 中获取 user_name
+        console.log('userName:', userName); // 使用计算属性获取 userName
         const response = await axios({
           method: 'post',
-          url: '/data',
+          url: '/report/home_page',
           headers: {
             'Content-Type': 'application/json',
+            //'Cache-Control': 'no-cache',
+            'User-Name': userName, // 使用计算属性获取 userName
           },
           withCredentials: true,
           data: {
-            user_name : userName,
-            //role: role,
+            user_name: userName, // 使用计算属性获取 userName
           }
         });
         console.log('Data from API:', response.data);

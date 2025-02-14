@@ -1,11 +1,13 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import store from './store';
 import axios from 'axios';
+
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = 'http://localhost:8080';
 
-// 添加响应拦截器
+//添加响应拦截器
 axios.interceptors.response.use(
   (response) => {
     // 对响应数据做点什么
@@ -21,4 +23,4 @@ axios.interceptors.response.use(
   }
 );
 
-createApp(App).use(router).mount('#app');
+createApp(App).use(router).use(store).mount('#app');
