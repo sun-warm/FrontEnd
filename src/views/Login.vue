@@ -49,6 +49,7 @@ export default {
         console.log('登录成功:', response.data);
         
         sessionStorage.setItem('user_name', this.username);
+        sessionStorage.setItem('department', response.data.department);
         console.log('user_name:', this.username);
         
         // 模拟登录成功，跳转到 Home 页面

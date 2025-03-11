@@ -51,15 +51,15 @@
           <span class="tooltip">主页设置</span>
         </div>
       </div>
-      <h2>欢迎小🐍指导</h2>
+      <h2>个人主页</h2>
       <!-- <div v-if="data">
         <h3>Data from API:</h3>
         <pre>{{ data }}</pre>
       </div> -->
       <div class="charts-container">
-        <div v-for="(chart, index) in charts" :key="index" class="chart-wrapper">
-          <div :id="'chart' + index" class="chart"></div>
-          <div v-if="showConfig" class="delete-icon" @click="deleteChart(index)">
+        <div v-for="chart in charts" :key="chart.id" class="chart-wrapper">
+          <div :id="'chart' + chart.id" class="chart"></div>
+          <div v-if="showConfig" class="delete-icon" @click="deleteChart(chart.id)">
             <i class="fas fa-trash"></i>
           </div>
         </div>
@@ -79,19 +79,16 @@ export default {
       data: null,
       showDropdown: false,
       showConfig: false,
-      charts: [
-        { xAxisType: 'person', yAxisType: 'hours', chartType: 'bar' },
-        { xAxisType: 'person', yAxisType: 'code', chartType: 'bar' },
-        { xAxisType: 'person', yAxisType: 'tasks', chartType: 'bar' },
-        { xAxisType: 'day', yAxisType: 'hours', chartType: 'line' }
-      ] // 固定的图表配置
+      charts: [] // 动态图表配置
     };
   },
   methods: {
     async GetHomePage() {
       try {
         const userName = sessionStorage.getItem('user_name'); // 从 sessionStorage 中获取 user_name
+        const department = sessionStorage.getItem('department');
         console.log('userName:', userName); // 使用计算属性获取 user_name
+        console.log('department:', department); // 使用计算属性获取 department
         const response = await axios({
           method: 'post',
           url: '/report/home_page',
@@ -103,10 +100,14 @@ export default {
           withCredentials: true,
           data: {
             user_name: userName, // 使用 sessionStorage 中的 user_name
+            department: department // 使用 sessionStorage 中的 department
           }
         });
-        //console.log('Data from API:', response.data);
         this.data = response.data;
+        this.charts = this.processChartData(response.data.reports);
+        sessionStorage.setItem('charts', JSON.stringify(this.charts));
+        console.log('Response data:', JSON.stringify(this.charts));
+        console.log('Response data:', this.charts);
         this.$nextTick(() => {
           this.initCharts(); // 初始化图表
         });
@@ -118,6 +119,18 @@ export default {
         }
       }
     },
+    processChartData(reports) {
+      return reports.map((report) => ({
+        id: report.id,
+        xAxisData: report.x_label_data,
+        yAxisData: report.y_label_data,
+        chartType: report.report_type // 根据索引或其他逻辑确定图表类型
+      }));
+    },
+    // getChartType(index) {
+    //   // 根据索引或其他逻辑返回图表类型
+    //   return this.charts[index].chartType;
+    // },
     initCharts() {
       this.charts.forEach((chart, index) => {
         this.updateChart(index);
@@ -125,29 +138,29 @@ export default {
     },
     updateChart(index) {
       const chart = this.charts[index];
-      const xAxisDataArray = this.getDataByType(chart.xAxisType);
-      const yAxisDataArray = this.getDataByType(chart.yAxisType);
-
-      const chartDom = document.getElementById('chart' + index);
+      //todo:没懂
+      const chartDom = document.getElementById('chart' + chart.id);
+      console.log('Chart:', index);
+      console.log('Chart DOM:', chartDom);
       if (chartDom) {
         const myChart = echarts.init(chartDom);
 
         const option = {
           title: {
-            text: 'ECharts 示例 ' + (index + 1)
+            text: 'ECharts 示例 ' + (chart.id)
           },
           tooltip: {},
           legend: {
             data: ['数据']
           },
           xAxis: {
-            data: xAxisDataArray
+            data: chart.xAxisData
           },
           yAxis: {},
           series: [{
             name: '数据',
             type: chart.chartType,
-            data: yAxisDataArray
+            data: chart.yAxisData
           }]
         };
 
@@ -157,23 +170,6 @@ export default {
         window.addEventListener('resize', () => {
           myChart.resize();
         });
-      }
-    },
-    getDataByType(type) {
-      // 根据类型返回相应的数据
-      switch (type) {
-        case 'person':
-          return ['人员1', '人员2', '人员3', '人员4', '人员5'];
-        case 'hours':
-          return Array.from({ length: 5 }, () => Math.floor(Math.random() * 40) + 10);
-        case 'code':
-          return Array.from({ length: 5 }, () => Math.floor(Math.random() * 1000) + 100);
-        case 'tasks':
-          return Array.from({ length: 5 }, () => Math.floor(Math.random() * 20) + 5);
-        case 'day':
-          return ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        default:
-          return [];
       }
     },
     selectTab(tab) {
@@ -188,8 +184,10 @@ export default {
       this.showConfig = !this.showConfig;
     },
     async deleteChart(index) {
+    
       try {
         const userName = sessionStorage.getItem('user_name');
+        const department = sessionStorage.getItem('department');
         const chartToDelete = this.charts[index];
         const response = await axios({
           method: 'post',
@@ -200,16 +198,20 @@ export default {
           },
           withCredentials: true,
           data: {
-            report_requests:[{
+            user_name: userName,
+            department:department,
+            report_requests:{
+              id: chartToDelete.id,
               x_label: chartToDelete.xAxisType,
               y_label: chartToDelete.yAxisType,
-              report_type: chartToDelete.chartType,
-              add: 2, // 2 表示删除
-            }],
+              report_type: chartToDelete.chartType, 
+            },
+            add: 2, // 2 表示删除
           }
         });
         if (response.status === 200) {
           this.charts.splice(index, 1);
+          this.removeItem(index);
           this.$nextTick(() => {
             this.initCharts(); // 重新初始化图表
           });
@@ -217,6 +219,16 @@ export default {
       } catch (error) {
         console.error('Error deleting chart:', error);
       }
+    },
+    removeItem(index) {
+      // 使用 filter 方法来过滤掉不需要的项
+      this.charts = this.charts.filter(chart => chart.id !== index);
+      sessionStorage.setItem('charts', JSON.stringify(this.charts)); // 更新缓存中的图表数据
+      console.log('Charts after deletion:', JSON.stringify(this.charts));
+      console.log('Charts after deletion:', this.charts);
+      this.$nextTick(() => {
+        this.initCharts(); // 重新初始化图表
+      });
     },
     logout() {
       sessionStorage.removeItem('user_name');

@@ -6,7 +6,7 @@ import axios from 'axios';
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = 'http://172.20.10.2:8080';
-//axios.defaults.baseURL = 'http://localhost:8080';
+//axios.defaults.baseURL = 'http://192.168.71.154:8080';
 
 //添加响应拦截器
 axios.interceptors.response.use(

@@ -54,8 +54,11 @@
       </div>
       <div v-if="viewMode === 'preset'">
         <div class="charts-container">
-          <div v-for="(chart, index) in paginatedCharts" :key="index" :class="['chart-wrapper', { 'preset-chart': viewMode === 'preset', 'custom-chart': viewMode === 'custom' }]">
-            <div :id="'chart' + index" class="chart"></div>
+          <div v-for="chart in paginatedCharts" :key="chart.id" :class="['chart-wrapper', { 'preset-chart': viewMode === 'preset', 'custom-chart': viewMode === 'custom' }]">
+            <div :id="'chart' + chart.id" class="chart"></div>
+            <div class="add-icon" @click="checkInUserHomeCharts(chart.id)">
+              <i class="fas fa-plus"></i>
+            </div>
           </div>
         </div>
         <div class="pagination">
@@ -68,7 +71,7 @@
         <div>
           <label for="xAxis">选择横坐标:</label>
           <select v-model="customChart.xAxis">
-            <option value="person">人员</option>
+            <option value="user_name">人员</option>
             <option value="day">日期</option>
           </select>
         </div>
@@ -112,13 +115,92 @@ export default {
       data: null,
       showDropdown: false,
       charts: [
-        { xAxisType: 'person', yAxisType: 'hours', chartType: 'bar' },
-        { xAxisType: 'person', yAxisType: 'code', chartType: 'bar' },
-        { xAxisType: 'person', yAxisType: 'tasks', chartType: 'bar' },
-        { xAxisType: 'day', yAxisType: 'hours', chartType: 'line' },
-        { xAxisType: 'day', yAxisType: 'code', chartType: 'line' },
-        { xAxisType: 'day', yAxisType: 'tasks', chartType: 'line' }
-      ], // 固定的图表配置
+        { id: 0, name: '工作量统计', xAxisType: '姓名', yAxisType: '工时', chartType: 'bar' },
+        { id: 1, name: '工作量统计', xAxisType: '年月', yAxisType: '工时', chartType: 'line' },
+        { id: 2, name: '工作量统计', xAxisType: '年月', yAxisType: '工时', chartType: 'bar' },
+        { id: 3, name: '工作量统计', xAxisType: '年', yAxisType: '工时', chartType: 'bar' },
+      ], 
+      chartsRequest:[
+        {
+          id: 0,
+          x_label: "user_name",
+          y_label: "work_time",
+          table: "work_time",
+          report_type: "bar",
+          search_command: [
+            {
+              command_type: 1,
+              field_name: "year_n_month",
+              operator: "=",
+              value: "2025-03"
+            },
+            {
+              command_type: 1,
+              field_name: "department",
+              operator: "=",
+              value: "质量控制部"
+            }
+          ]
+        },
+        {
+          id: 1,
+          x_label: "year_n_month",
+          y_label: "work_time",
+          table: "work_time",
+          report_type: "line",
+          search_command: [
+            {
+              command_type: 1,
+              field_name: "user_name",
+              operator: "=",
+              value: "y-sun.wen"
+            }
+          ]
+        },
+        {
+          id: 2,
+          x_label: "user_name",
+          y_label: "work_time",
+          table: "work_time",
+          report_type: "bar",
+          search_command: [
+            {
+              command_type: 1,
+              field_name: "year_n_month",
+              operator: ">",
+              value: "2021-01"
+            }
+          ]
+        },
+        {
+          id: 3,
+          x_label: "year_n_month",
+          y_label: "work_time",
+          table: "work_time",
+          report_type: "bar",
+          search_command: [
+            {
+              command_type: 1,
+              field_name: "user_name",
+              operator: "=",
+              value: "y-sun.wen"
+            },
+            {
+              command_type: 2,
+              field_name: "year_n_month",
+              operator: "",
+              value: ""
+            },
+            {
+              command_type: 3,
+              field_name: "year_n_month",
+              operator: "asc",
+              value: ""
+            }
+          ]
+        }
+      ],
+// 固定的图表配置
       viewMode: 'preset', // 当前视图模式，'preset' 或 'custom'
       currentPage: 1, // 当前页码
       itemsPerPage: 4, // 每页显示的图表数量
@@ -137,7 +219,7 @@ export default {
     paginatedCharts() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
-      return this.charts.slice(start, end);
+      return this.charts.slice(start, end) ;
     }
   },
   methods: {
@@ -183,7 +265,7 @@ export default {
 
         const option = {
           title: {
-            text: 'ECharts 示例 ' + (index + 1)
+            text: chart.name
           },
           tooltip: {},
           legend: {
@@ -211,11 +293,11 @@ export default {
     getDataByType(type) {
       // 根据类型返回相应的数据
       switch (type) {
-        case 'person':
-          return ['人员1', '人员2', '人员3', '人员4', '人员5'];
-        case 'hours':
-          return Array.from({ length: 5 }, () => Math.floor(Math.random() * 40) + 10);
-        case 'code':
+        case '年月':
+          return ['****-01', '****-02', '****-03', '****-04', '****-05'];
+        case '年':
+          return ['2021', '2022', '2023', '2024', '2025'];
+        case '工时':
           return Array.from({ length: 5 }, () => Math.floor(Math.random() * 1000) + 100);
         case 'tasks':
           return Array.from({ length: 5 }, () => Math.floor(Math.random() * 20) + 5);
@@ -251,6 +333,63 @@ export default {
         this.$nextTick(() => {
           this.initCharts(); // 重新初始化图表
         });
+      }
+    },
+    setViewMode(mode) {
+      this.viewMode = mode;
+      if (mode === 'preset') {
+        this.$nextTick(() => {
+          this.initCharts(); // 重新初始化图表
+        });
+      }
+    },
+    checkInUserHomeCharts(index){
+      // 使用 some 方法检查是否有对象的 name 字段包含 valueToCheck
+      const subscribesCharts = JSON.parse(sessionStorage.getItem('charts'));
+      const exists = subscribesCharts.some(subscribesChart => subscribesChart.id === index);
+      // 输出结果
+      console.log(`Does any item's name contain '${index}'?`, exists);
+      if (exists == false){
+        this.addChart(index);
+      }else{
+        alert('该图表已存在');
+      }
+    },
+    async addChart(index){
+      try {
+        const userName = sessionStorage.getItem('user_name');
+        const department = sessionStorage.getItem('department');
+        const chartToAdd= this.chartsRequest[index];
+        const response = await axios({
+          method: 'post',
+          url: '/report/modify',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Name': userName,
+          },
+          withCredentials: true,
+          data: {
+            user_name: userName,
+            department:department,
+            report_requests:{
+              id: chartToAdd.id,
+              x_label: chartToAdd.x_label,
+              y_label: chartToAdd.y_label,
+              table: chartToAdd.table,
+              report_type: chartToAdd.report_type,
+              search_command: chartToAdd.search_command
+            },
+            add: 1, // 1 表示添加
+          }
+        });
+        if (response.status === 200) {
+          this.charts.splice(index, 1);
+          this.$nextTick(() => {
+            this.initCharts(); // 重新初始化图表
+          });
+        }
+      } catch (error) {
+        console.error('Error add chart:', error);
       }
     },
     generateCustomChart() {
@@ -291,14 +430,6 @@ export default {
         }
       });
     },
-    setViewMode(mode) {
-      this.viewMode = mode;
-      if (mode === 'preset') {
-        this.$nextTick(() => {
-          this.initCharts(); // 重新初始化图表
-        });
-      }
-    },
     addToPreset() {
       // 将自定义图表加入预设图表
       this.charts.push({
@@ -312,7 +443,7 @@ export default {
       // 将自定义图表加入主页
       // 这里可以添加相应的逻辑，例如发送请求到后端保存图表配置
       alert('自定义图表已加入主页');
-    }
+    },
   },
   mounted() {
     this.GetHomePage(); // 在组件挂载时获取数据
@@ -491,6 +622,12 @@ body, html {
   padding: 10px;
 }
 
+.add-icon{
+  position: flex;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
 .preset-chart {
   width: 48%; /* 预设图表宽度 */
 }
