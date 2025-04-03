@@ -147,11 +147,11 @@ export default {
 
         const option = {
           title: {
-            text: 'ECharts 示例 ' + (chart.id)
+            text: '示例 ' + (chart.id)
           },
           tooltip: {},
           legend: {
-            data: ['数据']
+            data: ['工时']
           },
           xAxis: {
             data: chart.xAxisData

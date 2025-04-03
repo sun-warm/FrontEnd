@@ -269,7 +269,7 @@ export default {
           },
           tooltip: {},
           legend: {
-            data: ['数据']
+            data: ['工时']
           },
           xAxis: {
             data: xAxisDataArray
